@@ -442,18 +442,26 @@ public class ApngDrawable extends Drawable implements Animatable, Runnable {
     }
 
     private void prepare() {
-        String imagePath = getImagePathFromUri();
-        if (imagePath == null) return;
+        try {
+            String imagePath = getImagePathFromUri();
+            if (imagePath == null) return;
 
-        baseFile = new File(imagePath);
-        if (!baseFile.exists()) return;
+            baseFile = new File(imagePath);
+            if (!baseFile.exists()) return;
 
-        if (enableDebugLog) FLog.d("Extracting PNGs..");
-        ApngExtractFrames.process(baseFile);
-        if (enableDebugLog) FLog.d("Extracting complete");
+            if (enableDebugLog) FLog.d("Extracting PNGs..");
+            ApngExtractFrames.process(baseFile);
+            if (enableDebugLog) FLog.d("Extracting complete");
 
-        if (enableDebugLog) FLog.d("Read APNG information..");
-        readApngInformation(baseFile);
+            if (enableDebugLog) FLog.d("Read APNG information..");
+            readApngInformation(baseFile);
+        } catch (Exception e) {
+            if (enableDebugLog) {
+                e.printStackTrace();
+            }
+            isPrepared = false;
+            return;
+        }
 
         isPrepared = true;
     }
