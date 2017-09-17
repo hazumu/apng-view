@@ -1,12 +1,5 @@
 package com.github.sahasbhop.apngview.assist;
 
-import org.apache.commons.io.FilenameUtils;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.Locale;
-
 import ar.com.hjg.pngj.ChunkReader;
 import ar.com.hjg.pngj.ChunkSeqReaderPng;
 import ar.com.hjg.pngj.ImageInfo;
@@ -22,6 +15,11 @@ import ar.com.hjg.pngj.chunks.PngChunkFDAT;
 import ar.com.hjg.pngj.chunks.PngChunkIDAT;
 import ar.com.hjg.pngj.chunks.PngChunkIEND;
 import ar.com.hjg.pngj.chunks.PngChunkIHDR;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Locale;
+import org.apache.commons.io.FilenameUtils;
 
 /**
  * Source are taken from: https://github.com/leonbloy/pngj
@@ -67,7 +65,8 @@ public class ApngExtractFrames {
                     super.postProcessChunk(chunkR);
                     try {
                         String id = chunkR.getChunkRaw().id;
-                        PngChunk lastChunk = chunksList.getChunks().get(chunksList.getChunks().size() - 1);
+                        PngChunk lastChunk =
+                            chunksList.getChunks().get(chunksList.getChunks().size() - 1);
                         if (id.equals(PngChunkFCTL.ID)) {
                             frameIndex++;
                             frameInfo = ((PngChunkFCTL) lastChunk).getEquivImageInfo();
@@ -76,20 +75,20 @@ public class ApngExtractFrames {
                         if (id.equals(PngChunkFDAT.ID) || id.equals(PngChunkIDAT.ID)) {
                             if (id.equals(PngChunkIDAT.ID)) {
                                 // copy IDAT as is (only if file is open == if FCTL previous == if IDAT is part of the animation
-                                if (fo != null)
-                                    chunkR.getChunkRaw().writeChunk(fo);
+                                if (fo != null) chunkR.getChunkRaw().writeChunk(fo);
                             } else {
                                 // copy fDAT as IDAT, trimming the first 4 bytes
                                 ChunkRaw crawi =
-                                        new ChunkRaw(chunkR.getChunkRaw().len - 4, ChunkHelper.b_IDAT, true);
-                                System.arraycopy(chunkR.getChunkRaw().data, 4, crawi.data, 0, crawi.data.length);
+                                    new ChunkRaw(chunkR.getChunkRaw().len - 4, ChunkHelper.b_IDAT,
+                                        true);
+                                System.arraycopy(chunkR.getChunkRaw().data, 4, crawi.data, 0,
+                                    crawi.data.length);
                                 crawi.writeChunk(fo);
                             }
                             chunkR.getChunkRaw().data = null; // be kind, release memory
                         }
                         if (id.equals(PngChunkIEND.ID)) {
-                            if (fo != null)
-                                endFile(); // end last file
+                            if (fo != null) endFile(); // end last file
                         }
                     } catch (Exception e) {
                         throw new PngjException(e);
@@ -106,10 +105,12 @@ public class ApngExtractFrames {
             PngChunkIHDR ihdr = new PngChunkIHDR(frameInfo);
             ihdr.createRawChunk().writeChunk(fo);
 
-            for (PngChunk chunk : getChunksList(false).getChunks()) {// copy all except actl and fctl, until IDAT
+            for (PngChunk chunk : getChunksList(
+                false).getChunks()) {// copy all except actl and fctl, until IDAT
                 String id = chunk.id;
 
-                if (id.equals(PngChunkIHDR.ID) || id.equals(PngChunkFCTL.ID) || id.equals(PngChunkACTL.ID)) {
+                if (id.equals(PngChunkIHDR.ID) || id.equals(PngChunkFCTL.ID) || id.equals(
+                    PngChunkACTL.ID)) {
                     continue;
                 }
 
@@ -133,7 +134,8 @@ public class ApngExtractFrames {
     }
 
     /**
-     * Get a formatted file name for a PNG file, which is extracted from the source at a specific frame index
+     * Get a formatted file name for a PNG file, which is extracted from the source at a specific
+     * frame index
      *
      * @param sourceFile Source file
      * @param frameIndex Position of the frame
@@ -147,14 +149,19 @@ public class ApngExtractFrames {
     }
 
     /**
-     * Reads a APNG file and tries to split it into its frames - low level! Returns number of animation frames extracted
+     * Reads a APNG file and tries to split it into its frames - low level! Returns number of
+     * animation frames extracted
      */
     public static int process(final File orig) {
         // we extend PngReader, to have a custom behavior: load all chunks opaquely, buffering all, and react to some
         // special chnks
-        PngReaderBuffered pngr = new PngReaderBuffered(orig);
-        pngr.end(); // read till end - this consumes all the input stream and does all!
-        return pngr.frameIndex + 1;
+        try {
+            PngReaderBuffered pngr = new PngReaderBuffered(orig);
+            pngr.end(); // read till end - this consumes all the input stream and does all!
+            return pngr.frameIndex + 1;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
     }
-
 }
